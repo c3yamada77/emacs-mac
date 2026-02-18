@@ -899,6 +899,25 @@ scmp (const char *s1, const char *s2, ptrdiff_t len)
 static bool
 file_name_completion_dirp (int fd, struct dirent *dp, ptrdiff_t len)
 {
+  struct stat st;
+  /* 1. First, strictly check the entry itself (no follow) to detect a symbolic link (AT_SYMLINK_NOFOLLOW) */
+  if (emacs_fstatat (fd, dp->d_name, &st, AT_SYMLINK_NOFOLLOW) == 0)
+    {
+      if (S_ISLNK (st.st_mode))
+        {
+          /* Strictly investigate the link target instead of trusting Google Drive's faccessat lie. */
+          if (emacs_fstatat (fd, dp->d_name, &st, 0) == 0)
+            return S_ISDIR (st.st_mode);
+          /* If it's too large and triggers EOVERFLOW, it's likely a directory. */
+          if (errno == EOVERFLOW) 
+            return true;
+          return false;
+        }
+      /* For a regular file (not a symbolic link), confirm the directory status at this point. */
+      return S_ISDIR (st.st_mode);
+    }
+  /* 2. If the directory status remains undetermined (e.g., on older OSs or specific file systems), 
+        fall back to the conventional detection method. */
   USE_SAFE_ALLOCA;
 #if defined DARWIN_OS && !defined HAVE_FACCESSAT
   char *subdir_name = SAFE_ALLOCA (len + 4);
