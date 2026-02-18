@@ -3433,8 +3433,10 @@ static void mac_move_frame_window_structure_1 (struct frame *, int, int);
 
   columns = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, emacsViewSize.width);
   rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, emacsViewSize.height);
+#if 0
   if (columns > DEFAULT_NUM_COLS)
     columns = DEFAULT_NUM_COLS;
+#endif  
   emacsViewSize.width = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, columns);
   emacsViewSize.height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, rows);
   emacsViewSizeInPixels = [emacsView convertSize:emacsViewSize toView:nil];
